@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Chatbot</title>
+  <style>
+    :root {
+      --user-color: #2563eb;
+      --bot-color: #f3f4f6;
+      --bg-color: #ffffff;
+      --text-color: #1f2937;
+      --border-color: #e5e7eb;
+    }
+    body {
+      font-family: "Inter", sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .chat-container {
+      width: 420px;
+      height: 620px;
+      background: var(--bg-color);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .chat-header {
+      background: var(--user-color);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f9fafb;
+    }
+    .message {
+      max-width: 80%;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      animation: fadeIn 0.25s ease-in;
+    }
+    .user-message {
+      align-self: flex-end;
+      background: var(--user-color);
+      color: white;
+      border-bottom-right-radius: 0;
+    }
+    .bot-message {
+      align-self: flex-start;
+      background: var(--bot-color);
+      color: var(--text-color);
+      border-bottom-left-radius: 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .chat-input {
+      display: flex;
+      border-top: 1px solid var(--border-color);
+      background: #fff;
+    }
+    .chat-input input {
+      flex: 1;
+      border: none;
+      padding: 1rem;
+      font-size: 1rem;
+      outline: none;
+      border-radius: 0 0 0 16px;
+    }
+    .chat-input button {
+      background: var(--user-color);
+      color: white;
+      border: none;
+      padding: 0 1.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 0 0 16px 0;
+      transition: background 0.2s;
+    }
+    .chat-input button:hover {
+      background: #1e40af;
+    }
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bot-color);
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      width: fit-content;
+      animation: fadeIn 0.25s ease-in;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      background-color: #9ca3af;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.3; }
+      40% { opacity: 1; }
+    }
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 4px;
+    }
+    @media (max-width: 480px) {
+      .chat-container { width: 100%; height: 100vh; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">💬 AI Chatbot</div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <form id="chat-form" class="chat-input">
+      <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById("chat-form");
+    const userInput = document.getElementById("user-input");
+    const messagesDiv = document.getElementById("chat-messages");
+    const BACKEND_URL = "http://localhost:8000/chat";
+    function addMessage(content, sender) {
+      const message = document.createElement("div");
+      message.classList.add("message", sender === "user" ? "user-message" : "bot-message");
+      message.textContent = content;
+      messagesDiv.appendChild(message);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    function showTypingIndicator() {
+      const typingDiv = document.createElement("div");
+      typingDiv.classList.add("typing");
+      typingDiv.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+      typingDiv.id = "typing-indicator";
+      messagesDiv.appendChild(typingDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    function removeTypingIndicator() {
+      const typingDiv = document.getElementById("typing-indicator");
+      if (typingDiv) typingDiv.remove();
+    }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage(text, "user");
+      userInput.value = "";
+      showTypingIndicator();
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await response.json();
+        removeTypingIndicator();
+        addMessage(data.reply || "Sorry, I didn’t understand that.", "bot");
+      } catch (err) {
+        console.error("Error:", err);
+        removeTypingIndicator();
+        addMessage("⚠️ Could not connect to the server.", "bot");
+      }
+    });
+  </script>
+</body>
+</html>
