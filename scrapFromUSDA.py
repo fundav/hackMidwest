@@ -50,7 +50,7 @@ class WebAutomator:
     def navigate_to(self, url: str):
         """Navigates the browser to a specific URL."""
         if self.driver:
-            print(f"Navigating to: {url}")
+            #print(f"Navigating to: {url}")
             self.driver.get(url)
 
     def add_browser_cookie(self, name: str, value: str, **kwargs):
