@@ -2,8 +2,9 @@
 # from pymongo.mongo_client import MongoClient
 # from pymongo.server_api import ServerApi
 from scrapFromUSDA import WebAutomator
-from selenium.webdriver.common.by import By
 
+from selenium.webdriver.common.by import By
+#from selenium import webdriver
 # uri = "mongodb+srv://ander:TopicalSet24#@cluster0.kbzhtfw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 # # Create a new client and connect to the server
@@ -29,7 +30,35 @@ program_deadline = USDA.find_element(By.CSS_SELECTOR, "#block-usda-rd-uswds-2-co
 print (program_deadline.text)
 
 program_overview = USDA.find_element(By.CSS_SELECTOR, "#overview > div > div")
-print (program_overview.text)\
+print (program_overview.text)
 
 program_overview_link = USDA.find_element(By.CSS_SELECTOR, "#overview > div > div > div > div > span > span > div > div > p > a")
 print (program_overview_link.text)
+
+program_apply = USDA.find_element(By.CSS_SELECTOR, "#to-apply")
+print (program_apply.text)
+
+program_requirements = USDA.find_element(By.CSS_SELECTOR, "#other-requirements > div > div > div > div > div > div > p")
+print (program_requirements.text)
+
+program_contact = USDA.find_element(By.CSS_SELECTOR, "#contact > div > div > div > div > div > div > p:nth-child(5)")
+print (program_contact.text)
+
+program_contact_link = USDA.find_element(By.CSS_SELECTOR, "#contact > div > div > div > div > div > div > p:nth-child(5)")
+print (program_contact_link.text)
+
+program_events = USDA.find_element(By.CSS_SELECTOR, "#events")
+print (program_events.text)
+
+
+#contact info (county - phone number) (not working)
+# requirements (not working)... links to other pages (not working)
+# program events (not working)
+# program apply (not working)
+#program overview link (not working)
+
+
+#elibility
+
+#next steps
+
