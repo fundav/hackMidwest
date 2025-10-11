@@ -1,30 +1,25 @@
-"""
-selenium_utils.py
-
-A reusable class containing the essential Selenium methods extracted from the 
-Sudoku solver program (setup, navigation, interaction, and cleanup). 
-This can be imported into new projects for web automation tasks.
-"""
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+from typing import Optional, List
+import time
 
 class WebAutomator:
     """
     A utility class to handle common Selenium automation tasks.
     """
     
-    def __init__(self, headless=False, browser='firefox'):
+    def __init__(self, headless: bool = False, browser: str = 'firefox'):
         """
-        Initializes the WebDriver instance with specified options.
-
+        Initializes the WebDriver instance.
+        
         Args:
             headless (bool): If True, runs the browser without a visible GUI.
-            browser (str): Specifies the browser to use ('firefox' is default).
+            browser (str): The browser to use ('firefox' or 'chrome').
         """
-        self.driver: RemoteWebDriver = None
+        self.driver: Optional[RemoteWebDriver] = None
         self.browser_type = browser.lower()
         self.headless = headless
         
@@ -34,22 +29,22 @@ class WebAutomator:
     def _setup_driver(self):
         """Initializes the specified browser driver."""
         if self.browser_type == 'firefox':
-            options = Options()
+            options = FirefoxOptions()
             if self.headless:
                 options.add_argument('-headless')
-            # Add other common options here if needed
-            # options.add_argument("--width=1500")
-            # options.add_argument("--height=800")
             self.driver = webdriver.Firefox(options=options)
         elif self.browser_type == 'chrome':
-            # You would use ChromeOptions and webdriver.Chrome() here
-            # Example: from selenium.webdriver.chrome.options import Options as ChromeOptions
-            print("Chrome setup not implemented in this snippet.")
+            options = ChromeOptions()
+            if self.headless:
+                options.add_argument('--headless')
+                options.add_argument('--no-sandbox')  # Recommended for Linux environments
+                options.add_argument('--disable-dev-shm-usage')
+            self.driver = webdriver.Chrome(options=options)
         else:
-            raise ValueError("Unsupported browser type.")
+            raise ValueError(f"Unsupported browser type: {self.browser_type}. Use 'firefox' or 'chrome'.")
 
     # --------------------------------------------------------------------------
-    # 2. Navigation and Page State Management
+    # 1. Navigation and Page State Management
     # --------------------------------------------------------------------------
 
     def navigate_to(self, url: str):
@@ -58,41 +53,63 @@ class WebAutomator:
             print(f"Navigating to: {url}")
             self.driver.get(url)
 
-    def add_browser_cookie(self, name: str, value: str):
+    def add_browser_cookie(self, name: str, value: str, **kwargs):
         """Adds a cookie to the current browser session."""
         if self.driver:
-            print(f"Adding cookie: {name}={value}")
-            self.driver.add_cookie({"name": name, "value": value})
+            cookie = {"name": name, "value": value}
+            cookie.update(kwargs)
+            print(f"Adding cookie: {name}...")
+            self.driver.add_cookie(cookie)
+            
+    def reload_page(self):
+        """Reloads the current page."""
+        if self.driver:
+            self.driver.refresh()
+            print("Page reloaded.")
 
     # --------------------------------------------------------------------------
-    # 3. Locating and Interacting with Elements
+    # 2. Locating and Interacting with Elements
     # --------------------------------------------------------------------------
-
-    def find_element_by_id(self, element_id: str):
-        """Locates and returns a single element using its ID."""
+    
+    def find_element(self, by: By, value: str):
+        """Locates and returns a single element using a specified locator strategy."""
         if self.driver:
             try:
-                return self.driver.find_element(By.ID, element_id)
+                return self.driver.find_element(by, value)
             except Exception as e:
-                print(f"Error finding element with ID '{element_id}': {e}")
+                # Optionally log the error, but return None to continue script execution
+                # print(f"Error finding element (By={by}, Value='{value}'): {e}")
                 return None
         return None
+    
+    def find_elements(self, by: By, value: str) -> List:
+        """Locates and returns a list of elements using a specified locator strategy."""
+        if self.driver:
+            try:
+                return self.driver.find_elements(by, value)
+            except Exception as e:
+                print(f"Error finding elements (By={by}, Value='{value}'): {e}")
+                return []
+        return []
 
-    def get_element_value(self, element) -> str:
-        """Retrieves the 'value' attribute of a given element."""
+    def get_attribute(self, element, attribute_name: str) -> str:
+        """Retrieves the value of a specified attribute from an element."""
         if element:
-            return element.get_attribute("value")
+            return element.get_attribute(attribute_name)
         return ""
 
-    def input_text_by_id(self, element_id: str, text: str):
-        """Locates an element by ID and sends keys (inputs text) to it."""
-        element = self.find_element_by_id(element_id)
+    def send_keys(self, element, text: str):
+        """Sends keys (inputs text) to a target element."""
         if element:
-            print(f"Sending keys '{text}' to element ID: {element_id}")
             element.send_keys(text)
-
+            
+    def click_element(self, element):
+        """Clicks a target element."""
+        if element:
+            element.click()
+            
     # --------------------------------------------------------------------------
-    # 4. Utility and Cleanup
+    # 3. Utility and Cleanup
     # --------------------------------------------------------------------------
 
     def take_screenshot(self, file_path: str):
@@ -104,39 +121,53 @@ class WebAutomator:
             except Exception as e:
                 print(f"Error taking screenshot: {e}")
 
+    def wait(self, seconds: float):
+        """Pauses the script execution for a specified number of seconds."""
+        time.sleep(seconds)
+
     def close_driver(self):
         """Closes the current browser window/tab."""
         if self.driver:
-            self.driver.close()
-            print("Driver closed.")
+            self.driver.quit()  # Use quit() to close all associated windows and gracefully end the session
+            print("Driver session quit.")
 
 # --------------------------------------------------------------------------
-# Example Usage (Demonstrates how to use the class methods)
+# Example Usage (Demonstrates how to use the general-purpose class)
 # --------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    # 1. Setup
-    automator = WebAutomator(headless=True) # Set to True to run silently
-
-    # 2. Navigation and Page State Management
-    url = "https://www.brainbashers.com/showsudoku.asp?date=1123&diff=1"
-    automator.navigate_to(url)
-    automator.add_browser_cookie("DarkMode", "DarkModeOn")
-    automator.navigate_to(url) # Reload to apply cookie
-
-    # 3. Locating and Interacting with Elements (Example on the Sudoku grid)
+    # Usage Example: Scraping a public Google page (e.g., Google's main page)
+    # NOTE: You must have the appropriate WebDriver (e.g., geckodriver for Firefox) 
+    # installed and configured in your system PATH or use WebDriverManager.
     
-    # Try to scrape the value of the first cell (A10)
-    first_cell_id = "BBsudokuinputA11" 
-    first_cell = automator.find_element_by_id(first_cell_id)
-    if first_cell:
-        current_value = automator.get_element_value(first_cell)
-        print(f"Value in cell {first_cell_id}: '{current_value}'")
-        
-        # Example of inputting a solved number (e.g., if we solved for '9')
-        # Note: If the cell is already filled, this will append the text.
-        # automator.input_text_by_id(first_cell_id, '9') 
+    try:
+        # 1. Setup: Initialize for Chrome, running in headless mode
+        # Change 'chrome' to 'firefox' if preferred
+        automator = WebAutomator(headless=True, browser='chrome') 
 
-    # 4. Utility and Cleanup
-    # automator.take_screenshot("example_screenshot.png")
-    automator.close_driver()
+        # 2. Navigation
+        automator.navigate_to("https://www.google.com")
+        automator.wait(2) # Wait for page load
+
+        # 3. Locating and Interacting (Search for 'Selenium WebDriver')
+        # Google search box usually has name="q" or is locatable by tag/class
+        search_box = automator.find_element(By.NAME, "q") 
+        
+        if search_box:
+            search_query = "Selenium WebDriver"
+            automator.send_keys(search_box, search_query)
+            automator.send_keys(search_box, u'\ue007') # Send the ENTER key
+            automator.wait(3)
+
+            # 4. Utility (Take a screenshot of the search results)
+            automator.take_screenshot("google_search_results.png")
+
+        else:
+            print("Could not find the search box element.")
+
+    except Exception as e:
+        print(f"An error occurred during the automation process: {e}")
+
+    finally:
+        # 5. Cleanup
+        automator.close_driver()
