@@ -9,20 +9,10 @@ Judging
 MongoDB
 40% working demo
 30% solves a real world problem
-20% ??? value of solution?
+20% value of solution
 10 % presentation
 
 Code quality will not be judged. Each judge will be able to rate each application on a scale of zero to ten (0-10). Your application will be judged based on a few criteria:
 Value, impact, usefulness
  innovative, unique, and are excited about idea
  Realness, completeness, is it actually built or an MVP
-
-
-Resources
-https://landing.mdb.link/hack-midwest-mongodb-resources 
-Introduction to MongoDB Atlas (slides) | Passcode: 4Mt3h&fS
-Introduction to Vector Search (slides) | Passcode: ?xN=T0eY
-AI Rag Workshop (slides) | Passcode: !Bk0&Q#m
-Hack Midwest
-
-MongoDB Notes
