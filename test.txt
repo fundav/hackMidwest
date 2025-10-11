@@ -1,0 +1,104 @@
+[
+  {
+    "id": "1",
+    "source_url": "https://www.rd.usda.gov/programs-services/single-family-housing-programs/single-family-housing-direct-home-loans",
+    "title": "Single Family Housing Direct Home Loans (Section 502)",
+    "section": "purpose",
+    "text": "This program assists low- and very-low-income applicants to obtain decent, safe, and sanitary housing in eligible rural areas. It provides payment assistance (subsidy) to reduce the mortgage payment for a short time.",
+    "embedding": "<vector>",
+    "last_updated": "(Date of extraction)",
+    "contact_info": "Customer Service Center: 1-800-414-1226",
+    "jurisdiction": "National",
+    "program_name": "Single Family Housing Direct Home Loans",
+    "reason": "Supports low-income rural homeownership, a fundamental component of stable communities.",
+    "eligibility_highlights": [
+      "Individuals: Very-low/Low-income; unable to obtain other financing; U.S. Citizen/Eligible Noncitizen.",
+      "Property: Must be in an eligible rural area; not exceed applicable area loan limit."
+    ],
+    "source_urls": ["https://www.rd.usda.gov/..."],
+    "confidence": "high",
+    "next_steps": "Use the Direct Loan Self-Assessment tool and contact local RD office."
+  },
+  {
+    "id": "2",
+    "source_url": "https://www.rd.usda.gov/programs-services/single-family-housing-programs/single-family-housing-repair-loans-grants",
+    "title": "Single Family Housing Repair Loans and Grants (Section 504)",
+    "section": "purpose",
+    "text": "Provides **loans** to very-low-income homeowners to repair, improve, or modernize their homes or **grants** to elderly very-low-income homeowners to remove health and safety hazards.",
+    "embedding": "<vector>",
+    "last_updated": "(Date of extraction)",
+    "contact_info": "Customer Service Center: 1-800-414-1226",
+    "jurisdiction": "National",
+    "program_name": "Single Family Housing Repair Loans and Grants",
+    "reason": "Directly addresses home maintenance needs and safety for low-income and elderly residents.",
+    "eligibility_highlights": [
+      "Loan: Very-low-income homeowner; unable to obtain credit elsewhere.",
+      "Grant: Age 62 or older; very-low-income; unable to repay a loan.",
+      "Area: Rural areas up to 20,000 population."
+    ],
+    "source_urls": ["https://www.rd.usda.gov/..."],
+    "confidence": "high",
+    "next_steps": "Contact local RD office to apply; applications accepted year-round."
+  },
+  {
+    "id": "3",
+    "source_url": "https://www.rd.usda.gov/programs-services/single-family-housing-programs/single-family-housing-guaranteed-loan-program",
+    "title": "Single Family Housing Guaranteed Loan Program (Section 502)",
+    "section": "purpose",
+    "text": "Assists approved lenders in providing **low- and moderate-income** households the opportunity to own adequate, modest, safe dwellings as their primary residence with **100% financing**.",
+    "embedding": "<vector>",
+    "last_updated": "(Date of extraction)",
+    "contact_info": "Customer Service Center: 1-800-414-1226",
+    "jurisdiction": "National",
+    "program_name": "Single Family Housing Guaranteed Loan Program",
+    "reason": "Provides a zero-down-payment path to homeownership for eligible rural residents.",
+    "eligibility_highlights": [
+      "Household income cannot exceed 115% of the median household income.",
+      "Must agree to occupy the dwelling as a primary residence.",
+      "Apply through an approved private lender, not directly through USDA."
+    ],
+    "source_urls": ["https://www.rd.usda.gov/..."],
+    "confidence": "high",
+    "next_steps": "Use the Guaranteed Program Eligibility Tool and find an approved lender."
+  },
+  {
+    "id": "4",
+    "source_url": "https://www.rd.usda.gov/programs-services/business-programs/business-industry-loan-guarantees",
+    "title": "Business & Industry (B&I) Loan Guarantees",
+    "section": "purpose",
+    "text": "This program provides **loan guarantees** to lenders (up to 80%) to help finance rural businesses, stimulate economic growth, and create/retain quality jobs in rural areas.",
+    "embedding": "<vector>",
+    "last_updated": "(Date of extraction)",
+    "contact_info": "Contact local RD State Office",
+    "jurisdiction": "National",
+    "program_name": "Business & Industry Loan Guarantees",
+    "reason": "Provides capital access for rural businesses that a commercial loan alone would not cover.",
+    "eligibility_highlights": [
+      "Applicant: For-profit businesses, Non-profits, Public Bodies, and Federally Recognized Tribes.",
+      "Area: Rural areas outside a city/town of **50,000** or more."
+    ],
+    "source_urls": ["https://www.rd.usda.gov/..."],
+    "confidence": "high",
+    "next_steps": "Contact a local lender or the RD State Office to discuss a potential project."
+  },
+  {
+    "id": "5",
+    "source_url": "https://www.rd.usda.gov/programs-services/water-environmental-programs/water-waste-disposal-loan-grant-program",
+    "title": "Water and Waste Disposal Loan & Grant Program",
+    "section": "purpose",
+    "text": "Finances essential infrastructure: drinking water, sanitary sewage disposal, sanitary solid waste disposal, and storm water drainage systems in rural areas.",
+    "embedding": "<vector>",
+    "last_updated": "(Date of extraction)",
+    "contact_info": "Contact local RD State Office",
+    "jurisdiction": "National",
+    "program_name": "Water and Waste Disposal Program",
+    "reason": "Essential funding for critical public health and environmental infrastructure.",
+    "eligibility_highlights": [
+      "Applicant: Public entities (municipalities, counties), Non-profits, Federally Recognized Tribes.",
+      "Area: Rural areas up to **10,000** population."
+    ],
+    "source_urls": ["https://www.rd.usda.gov/..."],
+    "confidence": "high",
+    "next_steps": "Contact local RD State Office for planning and application guidance."
+  }
+]
