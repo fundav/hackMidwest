@@ -32,7 +32,7 @@ for i in programLinks:
         text_content = item.get('program_overview_link')
     else:
         parts = []
-        for v in ['title', 'program_status', 'program_deadline', 'program_apply', 'program_requirements', 'program_contact', 'program_events']:
+        for v in ['title', 'website', 'program_status', 'program_deadline', 'program_apply', 'program_requirements', 'program_contact', 'program_events']:
             if item.get(v):
                 parts.append(str(item.get(v)))
         text_content = "\n\n".join(parts) if parts else ""

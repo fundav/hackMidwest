@@ -5,6 +5,10 @@ def scrape_current_page(USDA, By, link):
 	except Exception:
 		fields['title'] = None
 	try:
+		fields['website'] = link
+	except Exception:
+		fields['website'] = None
+	try:
 		fields['program_status'] = USDA.find_element(By.CSS_SELECTOR, "#block-usda-rd-uswds-2-content--2 > article > div.grid-row.bg-base-lighter.margin-top-2.padding-105.program-heading > div.desktop---grid-col-3.tablet---grid-col-4.grid-col-12.padding-05 > div").text
 	except Exception:
 		fields['program_status'] = None

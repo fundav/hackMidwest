@@ -282,6 +282,7 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
     and complete answer to the user's question *ONLY* based on the provided CONTEXT. 
     Reference the 'Program Name' and 'Title' when possible to ground your answer.
     Do not use outside knowledge.
+    but small talk can happen.
     
     If the context does not contain the answer, state clearly: 
     "I cannot find the answer to that specific question in the USDA programs documentation."
