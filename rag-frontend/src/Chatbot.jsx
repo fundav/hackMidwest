@@ -72,7 +72,6 @@ function Chatbot() {
 
   return (
     <div style={styles.chatContainer}>
-  <img src="https://wpde.com/resources/media2/16x9/full/1015/center/80/599fdfa6-184a-4634-90a3-ed7345b576ed-large16x9_USDA101822.png" alt="USDA logo" style={styles.logo} />
       <h2>The Rural Navigator</h2>
       
       {/* Message History */}
@@ -122,14 +121,8 @@ const styles = {
     padding: '24px',
     borderRadius: '12px',
     boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-    background: 'linear-gradient(135deg, #fffbe6 0%, #e6f9ec 30%, #e6f0fa 60%, #ffe6d1 100%)',
-    /*
-      #fffbe6 - soft yellow
-      #e6f9ec - soft green
-      #e6f0fa - soft blue
-      #ffe6d1 - soft orange
-    */
-    position: 'relative',
+  // Keep original (light) color palette — plain background (no pattern)
+  backgroundColor: '#ffffff',
     display: 'flex',
     flexDirection: 'column',
   },
@@ -184,15 +177,6 @@ const styles = {
     backgroundColor: '#9caf88',
     color: 'white',
     cursor: 'pointer',
-  }
-  ,
-  logo: {
-    position: 'absolute',
-    top: '12px',
-    left: '12px',
-    width: '40px',
-    height: '40px',
-    borderRadius: '6px',
   }
 };
 
