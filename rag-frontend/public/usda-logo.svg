@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 64 64" role="img" aria-label="USDA badge placeholder">
+  <rect width="64" height="64" rx="8" fill="#2e7d32"/>
+  <circle cx="32" cy="24" r="10" fill="#fff"/>
+  <rect x="12" y="40" width="40" height="8" rx="4" fill="#fff"/>
+  <text x="32" y="56" font-size="6" font-family="Arial, Helvetica, sans-serif" fill="#ffffff" text-anchor="middle">USDA</text>
+</svg>
