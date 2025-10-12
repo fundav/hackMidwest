@@ -6,9 +6,6 @@ from pymongo import MongoClient
 import certifi
 import urllib.parse
 import re
-from scrapFromUSDA import WebAutomator
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 
 # 1. Load Environment Variables (happens once when the server starts)
 load_dotenv()
@@ -303,22 +300,6 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
             model=RAG_CHAT_MODEL,
             contents=system_prompt
         )
-        driver = WebAutomator(True)
-        driver.driver.implicitly_wait(30)
-        url = "https://gemini.google.com/app"
-        driver.navigate_to(url)
-        chatbox = driver.find_element(By.CSS_SELECTOR, ".ql-editor")
-        chatbox.clear()
-        chatbox.send_keys(Keys.UP)
-        prompt = f"Reword this AI chatbot response to sound more professional and clean (ANSWER DIRECTLY, MAKE IT IN COMPACT PARAGRAPHS, AND DO NOT: REFERENCE THIS PROMPT IN REPONSE, USE BULLET POINTS))\n\n{response.text}"
-        chatbox.send_keys(prompt)
-        chatbox.send_keys(Keys.ENTER)
-        reponse = driver.find_element(By.CSS_SELECTOR, "infinite-scroller.chat-history")
-        Wait = driver.find_element(By.CSS_SELECTOR, ".response-container-has-multiple-responses")
-        reponse = Wait.find_elements(By.TAG_NAME, 'p')
-        a = []
-        for i in reponse:
-            a.append(i.text)
-        return "\n".join(a)
+        return response.text
     except APIError as e:
         return f"Error generating final response: {e}"
