@@ -9,7 +9,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 
 # 1. Load Environment Variables (happens once when the server starts)
 load_dotenv()
@@ -304,24 +304,40 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
             model=RAG_CHAT_MODEL,
             contents=system_prompt
         )
-        firefox_options = Options()
-        firefox_options.add_argument('-headless')
-        driver = webdriver.Firefox(options=firefox_options)
+    except APIError as e:
+        return f"Error generating final response: {e}"
+
+    # Try to use headless Chrome to post-process the model text; if Selenium/Chrome
+    # isn't available or fails, return the raw model text instead.
+    try:
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+
+        driver = webdriver.Chrome(options=chrome_options)
         driver.implicitly_wait(30)
         url = "https://gemini.google.com/app"
         driver.get(url)
+
         chatbox = driver.find_element(By.CSS_SELECTOR, ".ql-editor")
         chatbox.clear()
         chatbox.send_keys(Keys.UP)
-        prompt = f"Reword this AI chatbot response to sound more professional and clean (ANSWER DIRECTLY, MAKE IT IN COMPACT PARAGRAPHS, AND DO NOT: REFERENCE THIS PROMPT IN REPONSE, USE BULLET POINTS))\n\n{response.text}"
+
+        prompt = (
+            "Reword this AI chatbot response to sound more professional and clean (ANSWER DIRECTLY, "
+            "MAKE IT IN COMPACT PARAGRAPHS, AND DO NOT: REFERENCE THIS PROMPT IN RESPONSE, USE BULLET POINTS)\n\n"
+            f"{getattr(response, 'text', str(response))}"
+        )
+
         chatbox.send_keys(prompt)
         chatbox.send_keys(Keys.ENTER)
-        reponse = driver.find_element(By.CSS_SELECTOR, "infinite-scroller.chat-history")
+
         Wait = driver.find_element(By.CSS_SELECTOR, ".response-container-has-multiple-responses")
         reponse = Wait.find_elements(By.TAG_NAME, 'p')
-        a = []
-        for i in reponse:
-            a.append(i.text)
+        a = [i.text for i in reponse]
+        driver.quit()
         return "\n".join(a)
-    except APIError as e:
-        return f"Error generating final response: {e}"
+    except Exception:
+        # If any Selenium/Chrome error occurs, return the raw model text
+        return getattr(response, 'text', str(response))
