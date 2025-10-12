@@ -6,10 +6,6 @@ from pymongo import MongoClient
 import certifi
 import urllib.parse
 import re
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
 
 # 1. Load Environment Variables (happens once when the server starts)
 load_dotenv()
@@ -123,33 +119,29 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
         
     # --- 2.1 Embed the User Query ---
     try:
-        # Use 'contents' (list) per Gemini client API
-        query_embedding_response = gemini_client.models.embed_content(
-            model=EMBEDDING_MODEL,
-            contents=[user_query]
+        from google.genai import types # Ensure types is imported for config
+
+        # 1. CRITICAL FIX: Use the correct configuration object for RETRIEVAL_QUERY
+        config = types.EmbedContentConfig(
+            task_type="RETRIEVAL_QUERY"
         )
 
-        # extract embedding robustly
-        raw_vec = None
-        if hasattr(query_embedding_response, 'embedding'):
-            raw_vec = query_embedding_response.embedding
-        elif hasattr(query_embedding_response, 'embeddings'):
-            raw_vec = query_embedding_response.embeddings[0]
-        elif isinstance(query_embedding_response, dict):
-            raw_vec = query_embedding_response.get('embedding') or (query_embedding_response.get('embeddings') and query_embedding_response.get('embeddings')[0])
-            if not raw_vec and query_embedding_response.get('data'):
-                try:
-                    raw_vec = query_embedding_response['data'][0].get('embedding')
-                except Exception:
-                    raw_vec = None
-
-        # convert to plain list of floats
-        query_vector = embedding_to_list(raw_vec)
-
+        query_embedding_response = gemini_client.models.embed_content(
+            model=EMBEDDING_MODEL,
+            contents=[user_query],
+            config=config # Pass the configuration
+        )
+        
+        # 2. Extract the list of floats directly. This resolves the 'cannot encode object' error.
+        # .embeddings[0].values extracts the Python list of floats needed by PyMongo.
+        query_vector = query_embedding_response.embeddings[0].values
+        
         if query_vector is None:
-            return "Error: could not extract embedding from Gemini response"
+            return "Error: Could not extract embedding vector from Gemini response"
+
     except APIError as e:
         return f"Error embedding query with Gemini: {e}"
+    # --- The function continues immediately after this block with step 2.2 ---
     
     # --- 2.2 Perform Vector Search in MongoDB Atlas ---
     try:
@@ -304,40 +296,6 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
             model=RAG_CHAT_MODEL,
             contents=system_prompt
         )
+        return response.text
     except APIError as e:
         return f"Error generating final response: {e}"
-
-    # Try to use headless Chrome to post-process the model text; if Selenium/Chrome
-    # isn't available or fails, return the raw model text instead.
-    try:
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-
-        driver = webdriver.Chrome(options=chrome_options)
-        driver.implicitly_wait(30)
-        url = "https://gemini.google.com/app"
-        driver.get(url)
-
-        chatbox = driver.find_element(By.CSS_SELECTOR, ".ql-editor")
-        chatbox.clear()
-        chatbox.send_keys(Keys.UP)
-
-        prompt = (
-            "Reword this AI chatbot response to sound more professional and clean (ANSWER DIRECTLY, "
-            "MAKE IT IN COMPACT PARAGRAPHS, AND DO NOT: REFERENCE THIS PROMPT IN RESPONSE, USE BULLET POINTS)\n\n"
-            f"{getattr(response, 'text', str(response))}"
-        )
-
-        chatbox.send_keys(prompt)
-        chatbox.send_keys(Keys.ENTER)
-
-        Wait = driver.find_element(By.CSS_SELECTOR, ".response-container-has-multiple-responses")
-        reponse = Wait.find_elements(By.TAG_NAME, 'p')
-        a = [i.text for i in reponse]
-        driver.quit()
-        return "\n".join(a)
-    except Exception:
-        # If any Selenium/Chrome error occurs, return the raw model text
-        return getattr(response, 'text', str(response))
