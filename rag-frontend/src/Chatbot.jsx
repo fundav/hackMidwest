@@ -5,7 +5,7 @@ const API_ENDPOINT = 'http://localhost:8000/chat';
 
 // Structure for a single message
 const initialMessages = [
-  { role: 'assistant', content: 'Hello! I am your USDA Programs Assistant. Ask me a question about any program.' }
+  { role: 'assistant', content: 'Hello! I am Sproute 🌱. Ask me a question about any program.' }
 ];
 
 function Chatbot() {
@@ -72,23 +72,23 @@ function Chatbot() {
 
   return (
     <div style={styles.chatContainer}>
-      <h2>USDA Program Assistant</h2>
+      <h2>The Rural Navigator</h2>
       
       {/* Message History */}
       <div style={styles.messageList}>
         {messages.map((msg, index) => (
           <div key={index} style={msg.role === 'user' ? styles.userMessage : styles.aiMessage}>
             <div style={styles.messageBubble}>
-                <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong> {msg.content}
+                <strong>{msg.role === 'user' ? 'You' : 'Sproute 🌱'}:</strong> {msg.content}
             </div>
           </div>
         ))}
         {/* Loading Indicator */}
         {isLoading && (
           <div style={styles.loadingMessage}>
-            <div style={styles.messageBubble}>
-                AI is processing your query...
-            </div>
+      <div style={styles.messageBubble}>
+        Sproute 🌱 is processing your query...
+      </div>
           </div>
         )}
         <div ref={chatEndRef} />
@@ -115,18 +115,25 @@ function Chatbot() {
 // Basic Inline Styles (You should replace this with a proper CSS file or library like Tailwind/MUI)
 const styles = {
   chatContainer: {
-    maxWidth: '600px',
-    margin: '40px auto',
-    padding: '20px',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    maxWidth: '900px',
+    height: '80vh',
+    margin: '20px auto',
+    padding: '24px',
+    borderRadius: '12px',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+  // Keep original (light) color palette — plain background (no pattern)
+  backgroundColor: '#ffffff',
+    display: 'flex',
+    flexDirection: 'column',
   },
   messageList: {
-    height: '400px',
+    flexGrow: 1,
     overflowY: 'auto',
     marginBottom: '15px',
-    paddingRight: '10px',
+    padding: '16px',
+    borderRadius: '8px',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02)',
   },
   userMessage: {
     textAlign: 'right',
@@ -141,9 +148,11 @@ const styles = {
     padding: '10px',
     borderRadius: '15px',
     display: 'inline-block',
-    background: '#e0f7fa', // Light blue for AI
+    background: '#e0f7fa', // Light blue for Sproute (original)
     color: '#004d40',
-    fontSize: '14px'
+    fontSize: '14px',
+    lineHeight: '1.4',
+    wordBreak: 'break-word',
   },
   loadingMessage: {
     textAlign: 'left',
@@ -156,14 +165,16 @@ const styles = {
   inputField: {
     flexGrow: 1,
     padding: '10px',
-    borderRadius: '4px',
+    borderRadius: '12px',
     border: '1px solid #ccc',
+    background: '#ffffff',
+    color: '#000000',
   },
   sendButton: {
     padding: '10px 15px',
     border: 'none',
-    borderRadius: '4px',
-    backgroundColor: '#007bff',
+    borderRadius: '12px',
+    backgroundColor: '#9caf88',
     color: 'white',
     cursor: 'pointer',
   }
