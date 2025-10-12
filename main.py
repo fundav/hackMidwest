@@ -2,7 +2,7 @@
 from scrapFromUSDA import WebAutomator
 from selenium.webdriver.common.by import By
 from scraping import scrape_current_page
-from ragService import gemini_client, collection, EMBEDDING_MODEL, VECTOR_FIELD, TEXT_FIELD
+from ragService import gemini_client, collection, EMBEDDING_MODEL, VECTOR_FIELD, TEXT_FIELD, embedding_to_list
 import hashlib
 import os
 import traceback
@@ -26,24 +26,22 @@ for i in programLinks:
     obj.append(item)
 
     # Prepare a text field for embedding and storage. Prefer program_overview, then overview link, then joined fields.
-    text_content = None
     if item.get('program_overview'):
         text_content = item.get('program_overview')
     elif item.get('program_overview_link'):
         text_content = item.get('program_overview_link')
     else:
-        # Fallback: join available string fields
         parts = []
         for v in ['title', 'program_status', 'program_deadline', 'program_apply', 'program_requirements', 'program_contact', 'program_events']:
             if item.get(v):
                 parts.append(str(item.get(v)))
         text_content = "\n\n".join(parts) if parts else ""
 
-    # Ensure TEXT_FIELD variable
-    text_field_name = TEXT_FIELD if 'TEXT_FIELD' in globals() and TEXT_FIELD else os.getenv('MONGO_TEXT_FIELD') or 'text'
+    # Use TEXT_FIELD from ragService (fallback to 'text' if missing)
+    text_field_name = TEXT_FIELD or os.getenv('MONGO_TEXT_FIELD') or 'text'
 
-    # Create a simple unique id for upsert using the overview link or title
-    unique_key = item.get('program_overview_link') or item.get('title') or str(hashlib.sha256(text_content.encode('utf-8')).hexdigest())
+    # Create a stable unique id for upsert using the overview link or title
+    unique_key = item.get('program_overview_link') or item.get('title') or hashlib.sha256(text_content.encode('utf-8')).hexdigest()
 
     # Embed the text and upsert into MongoDB
     try:
@@ -53,45 +51,24 @@ for i in programLinks:
             raise RuntimeError('Gemini client or Mongo collection not initialized')
         emb_resp = gemini_client.models.embed_content(model=EMBEDDING_MODEL, contents=[text_content])
 
-        # Robust extraction of embedding vector from response
-        # 1. CRITICAL FIX: Extract the list of floats needed by PyMongo.
-        # The Gemini SDK returns the vector inside .embeddings[0].values
-        embedding_vector = emb_resp.embeddings[0].values
-        
-        # 2. Check for empty or invalid extraction
-        if not embedding_vector or embedding_vector is None:
-            raise ValueError('Could not extract embedding vector from Gemini response, the response was empty or malformed.')
+        # Robust extraction and normalization using helper from ragService
+        raw_vec = None
+        if hasattr(emb_resp, 'embedding'):
+            raw_vec = emb_resp.embedding
+        elif hasattr(emb_resp, 'embeddings'):
+            raw_vec = emb_resp.embeddings[0]
+        elif isinstance(emb_resp, dict):
+            raw_vec = emb_resp.get('embedding') or (emb_resp.get('embeddings') and emb_resp.get('embeddings')[0])
 
-        # 3. Build document for upsert (Normalization is now unnecessary)
+        normalized_vector = embedding_to_list(raw_vec)
+        if normalized_vector is None:
+            raise ValueError('Could not extract/normalize embedding vector from Gemini response')
+
+        # Build document and upsert
         doc = item.copy()
         doc[text_field_name] = text_content
-        
-        # 4. Use the extracted list of floats directly
-        doc[VECTOR_FIELD] = embedding_vector
-        # Build document to upsert
-        doc = item.copy()
-        doc[text_field_name] = text_content
-
-        # Normalize embedding vector to a plain Python list of floats
-        try:
-            if embedding_vector is None:
-                normalized_vector = None
-            else:
-                # If the vector is wrapped in another container (like dict or object), try to extract a list
-                if hasattr(embedding_vector, '__iter__') and not isinstance(embedding_vector, (str, bytes)):
-                    normalized_vector = [float(x) for x in embedding_vector]
-                else:
-                    # single numeric value -> wrap in list
-                    normalized_vector = [float(embedding_vector)]
-        except Exception:
-            # Fallback: drop the embedding if it can't be converted
-            normalized_vector = None
-
-        if normalized_vector is not None:
-            doc[VECTOR_FIELD] = normalized_vector
-
-        # Use upsert on a stable key
-        filter_q = { 'unique_id': unique_key }
+        doc[VECTOR_FIELD] = normalized_vector
+        filter_q = {'unique_id': unique_key}
         doc['unique_id'] = unique_key
 
         try:
@@ -105,7 +82,6 @@ for i in programLinks:
                 safe_doc = {}
                 for k, v in doc.items():
                     if isinstance(k, str) and (k.startswith('$') or '.' in k):
-                        # skip or rename; here we skip
                         continue
                     safe_doc[k] = v
 

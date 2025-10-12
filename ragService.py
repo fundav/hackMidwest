@@ -1,11 +1,11 @@
 import os
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types # <--- ADDED THIS IMPORT
 from google.genai.errors import APIError
 from pymongo import MongoClient
 import certifi
 import urllib.parse
+import re
 
 # 1. Load Environment Variables (happens once when the server starts)
 load_dotenv()
@@ -25,6 +25,58 @@ TEXT_FIELD = os.getenv("MONGO_TEXT_FIELD") or "text"      # 'text'
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 RAG_CHAT_MODEL = 'gemini-2.5-flash'          # <-- DEFINES RAG_CHAT_MODEL
 VECTOR_INDEX_NAME = "vector_index"           # <-- DEFINES VECTOR_INDEX_NAME
+
+
+# Helper: convert various embedding container types into plain Python list of floats
+def embedding_to_list(vec):
+    if vec is None:
+        return None
+    # google.genai.types.ContentEmbedding has .values
+    if hasattr(vec, 'values'):
+        try:
+            return [float(x) for x in vec.values]
+        except Exception:
+            pass
+    # embeddings may be directly on .embedding
+    if hasattr(vec, 'embedding'):
+        try:
+            e = getattr(vec, 'embedding')
+            if hasattr(e, 'values'):
+                return [float(x) for x in e.values]
+            if isinstance(e, (list, tuple)):
+                return [float(x) for x in e]
+        except Exception:
+            pass
+    # dict-like shapes
+    if isinstance(vec, dict):
+        if 'values' in vec and isinstance(vec['values'], (list, tuple)):
+            try:
+                return [float(x) for x in vec['values']]
+            except Exception:
+                pass
+        if 'embedding' in vec and isinstance(vec['embedding'], (list, tuple)):
+            try:
+                return [float(x) for x in vec['embedding']]
+            except Exception:
+                pass
+        if 'data' in vec and isinstance(vec['data'], list) and len(vec['data']) > 0:
+            first = vec['data'][0]
+            if isinstance(first, dict) and 'embedding' in first and isinstance(first['embedding'], (list, tuple)):
+                try:
+                    return [float(x) for x in first['embedding']]
+                except Exception:
+                    pass
+    # plain list/tuple
+    if isinstance(vec, (list, tuple)):
+        try:
+            return [float(x) for x in vec]
+        except Exception:
+            pass
+    # try to iterate
+    try:
+        return [float(x) for x in vec]
+    except Exception:
+        return None
 
 # --- 2. Initialize Clients Globally (These variables must be defined!) ---
 try:
@@ -67,32 +119,28 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
         
     # --- 2.1 Embed the User Query ---
     try:
-        # 1. Define the configuration object
-        config = types.EmbedContentConfig(
-            task_type="RETRIEVAL_QUERY" # <--- Use task_type here
-        )
-
-        # 2. Pass the config to the embed_content call
+        # Use 'contents' (list) per Gemini client API
         query_embedding_response = gemini_client.models.embed_content(
-            model=EMBEDDING_MODEL, 
-            contents=user_query,
-            config=config # <--- Pass the configuration object
+            model=EMBEDDING_MODEL,
+            contents=[user_query]
         )
-        query_vector = query_embedding_response.embeddings[0].values
 
         # extract embedding robustly
-        query_vector = None
+        raw_vec = None
         if hasattr(query_embedding_response, 'embedding'):
-            query_vector = query_embedding_response.embedding
+            raw_vec = query_embedding_response.embedding
         elif hasattr(query_embedding_response, 'embeddings'):
-            query_vector = query_embedding_response.embeddings[0]
+            raw_vec = query_embedding_response.embeddings[0]
         elif isinstance(query_embedding_response, dict):
-            query_vector = query_embedding_response.get('embedding') or (query_embedding_response.get('embeddings') and query_embedding_response.get('embeddings')[0])
-            if not query_vector and query_embedding_response.get('data'):
+            raw_vec = query_embedding_response.get('embedding') or (query_embedding_response.get('embeddings') and query_embedding_response.get('embeddings')[0])
+            if not raw_vec and query_embedding_response.get('data'):
                 try:
-                    query_vector = query_embedding_response['data'][0].get('embedding')
+                    raw_vec = query_embedding_response['data'][0].get('embedding')
                 except Exception:
-                    query_vector = None
+                    raw_vec = None
+
+        # convert to plain list of floats
+        query_vector = embedding_to_list(raw_vec)
 
         if query_vector is None:
             return "Error: could not extract embedding from Gemini response"
@@ -146,7 +194,84 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
         context = "\n\n".join(context_chunks)
 
         if not context:
-            return "I cannot find any relevant information in the knowledge base to answer that question."
+            # Attempt a text-based fallback retrieval so the chatbot can still answer
+            # when a vector index is not present. First try MongoDB $text (requires a text index),
+            # otherwise perform a case-insensitive regex search on the TEXT_FIELD.
+            text_candidates = []
+            try:
+                # Try $text search (will fail if no text index exists)
+                text_candidates = list(collection.find({"$text": {"$search": user_query}}, {TEXT_FIELD: 1, "title": 1, "program_name": 1}).limit(k))
+            except Exception:
+                # Fallback: try a tokenized OR-regex search across common text fields.
+                try:
+                    # extract words of length >=3 to avoid common stopwords
+                    tokens = re.findall(r"\w{3,}", user_query)
+                    tokens = [t for t in tokens if len(t) >= 3]
+                    # limit tokens to avoid huge queries
+                    tokens = tokens[:12]
+                    or_clauses = []
+                    for t in tokens:
+                        safe_t = re.escape(t)
+                        or_clauses.append({TEXT_FIELD: {"$regex": safe_t, "$options": "i"}})
+                        or_clauses.append({"title": {"$regex": safe_t, "$options": "i"}})
+                        or_clauses.append({"program_overview": {"$regex": safe_t, "$options": "i"}})
+
+                    if or_clauses:
+                        text_candidates = list(collection.find({"$or": or_clauses}, {TEXT_FIELD: 1, "title": 1, "program_name": 1}).limit(k))
+                    else:
+                        text_candidates = []
+                except Exception:
+                    text_candidates = []
+
+            if text_candidates:
+                # Build context from textual candidates and continue to LLM generation
+                context_chunks = []
+                for result in text_candidates:
+                    chunk_text = result.get(TEXT_FIELD) or result.get('program_overview') or ''
+                    program_name = result.get('program_name', 'N/A')
+                    title = result.get('title', 'N/A')
+                    formatted_chunk = (
+                        f"--- DOCUMENT START ---\n"
+                        f"Program Name: {program_name}\n"
+                        f"Title: {title}\n"
+                        f"Content: {chunk_text}\n"
+                        f"--- DOCUMENT END ---"
+                    )
+                    context_chunks.append(formatted_chunk)
+
+                context = "\n\n".join(context_chunks)
+            else:
+                # If still no context, provide the diagnostic about missing vector index
+                try:
+                    num_vectors = collection.count_documents({VECTOR_FIELD: {'$exists': True}})
+                except Exception:
+                    num_vectors = 0
+
+                sample_dim = None
+                if num_vectors > 0:
+                    try:
+                        sample = collection.find_one({VECTOR_FIELD: {'$exists': True}})
+                        if sample and isinstance(sample.get(VECTOR_FIELD), list):
+                            sample_dim = len(sample.get(VECTOR_FIELD))
+                    except Exception:
+                        sample_dim = None
+
+                if num_vectors > 0:
+                    hint = (
+                        f"No relevant context found by vector search. "
+                        f"I see {num_vectors} documents that have a '{VECTOR_FIELD}' vector field"
+                    )
+                    if sample_dim:
+                        hint += f" (sample embedding dimension: {sample_dim})."
+                    hint += (
+                        " This usually means an Atlas Search (vector) index is not configured on that field, "
+                        f"or the index name is not '{VECTOR_INDEX_NAME}'.\n"
+                        "Please create a Vector Search (KNN) index on your Atlas cluster for this collection "
+                        f"targeting the field '{VECTOR_FIELD}' (dimensions should match the embedding size)."
+                    )
+                    return hint
+
+                return "I cannot find any relevant information in the knowledge base to answer that question."
             
     except Exception as e:
         return f"Error during MongoDB Vector Search: {e}"
@@ -167,7 +292,7 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
     USER QUESTION: {user_query}
     
     RESPONSE:
-"""
+    """
 
     try:
         response = gemini_client.models.generate_content(
