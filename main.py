@@ -54,22 +54,20 @@ for i in programLinks:
         emb_resp = gemini_client.models.embed_content(model=EMBEDDING_MODEL, contents=[text_content])
 
         # Robust extraction of embedding vector from response
-        embedding_vector = None
-        if hasattr(emb_resp, 'embedding'):
-            embedding_vector = emb_resp.embedding
-        elif hasattr(emb_resp, 'embeddings'):
-            embedding_vector = emb_resp.embeddings[0]
-        elif isinstance(emb_resp, dict):
-            embedding_vector = emb_resp.get('embedding') or (emb_resp.get('embeddings') and emb_resp.get('embeddings')[0])
-            if not embedding_vector and emb_resp.get('data'):
-                try:
-                    embedding_vector = emb_resp['data'][0].get('embedding')
-                except Exception:
-                    embedding_vector = None
+        # 1. CRITICAL FIX: Extract the list of floats needed by PyMongo.
+        # The Gemini SDK returns the vector inside .embeddings[0].values
+        embedding_vector = emb_resp.embeddings[0].values
+        
+        # 2. Check for empty or invalid extraction
+        if not embedding_vector or embedding_vector is None:
+            raise ValueError('Could not extract embedding vector from Gemini response, the response was empty or malformed.')
 
-        if embedding_vector is None:
-            raise ValueError('Could not extract embedding vector from Gemini response')
-
+        # 3. Build document for upsert (Normalization is now unnecessary)
+        doc = item.copy()
+        doc[text_field_name] = text_content
+        
+        # 4. Use the extracted list of floats directly
+        doc[VECTOR_FIELD] = embedding_vector
         # Build document to upsert
         doc = item.copy()
         doc[text_field_name] = text_content
