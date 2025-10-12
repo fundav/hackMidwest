@@ -1,4 +1,4 @@
-def scrape_current_page(USDA, By):
+def scrape_current_page(USDA, By, link):
 	fields = {}
 	try:
 		fields['title'] = USDA.find_element(By.CSS_SELECTOR, "#main-content > div > div > div > h1").text
@@ -13,39 +13,33 @@ def scrape_current_page(USDA, By):
 	except Exception:
 		fields['program_deadline'] = None
 	try:
+		USDA.navigate_to((link+"#overview"))
 		fields['program_overview'] = USDA.find_element(By.CSS_SELECTOR, "#overview > div > div").text
 	except Exception:
 		fields['program_overview'] = None
 	try:
-		fields['program_overview_link'] = USDA.find_element(By.CSS_SELECTOR, "#overview > div > div > div > div > span > span > div > div > p > a").get_attribute('href')
-	except Exception:
-		fields['program_overview_link'] = None
-	try:
+		USDA.navigate_to((link+"#to-apply"))
 		fields['program_apply'] = USDA.find_element(By.CSS_SELECTOR, "#to-apply").text
 	except Exception:
 		fields['program_apply'] = None
 	try:
+		USDA.navigate_to((link+"#other-requirements"))
 		fields['program_requirements'] = USDA.find_element(By.CSS_SELECTOR, "#other-requirements > div > div > div > div > div > div > p").text
 	except Exception:
 		fields['program_requirements'] = None
 	try:
+		USDA.navigate_to((link+"#contact"))
 		fields['program_contact'] = USDA.find_element(By.CSS_SELECTOR, "#contact > div > div > div > div > div > div > p:nth-child(5)").text
 	except Exception:
 		fields['program_contact'] = None
 	try:
+		USDA.navigate_to((link+"#contact"))
 		fields['program_contact_link'] = USDA.find_element(By.CSS_SELECTOR, "#contact > div > div > div > div > div > div > p:nth-child(5) a").get_attribute('href')
 	except Exception:
 		fields['program_contact_link'] = None
 	try:
+		USDA.navigate_to((link+"#events"))
 		fields['program_events'] = USDA.find_element(By.CSS_SELECTOR, "#events").text
 	except Exception:
 		fields['program_events'] = None
 	return fields
-
-# #contact info (county - phone number) (not working)
-# # requirements (not working)... links to other pages (not working)
-# # program events (not working)
-# # program apply (not working)
-# #program overview link (not working)
-# #elibility
-# #next steps

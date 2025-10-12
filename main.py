@@ -22,7 +22,7 @@ for i in range (0, int(index)):
 obj = []
 for i in programLinks:
     USDA.navigate_to(i)
-    item = scrape_current_page(USDA, By)
+    item = scrape_current_page(USDA, By, i)
     obj.append(item)
 
     # Prepare a text field for embedding and storage. Prefer program_overview, then overview link, then joined fields.
