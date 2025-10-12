@@ -2,7 +2,7 @@
 from scrapFromUSDA import WebAutomator
 from selenium.webdriver.common.by import By
 from scraping import scrape_current_page
-from ragServiceUP import gemini_client, collection, EMBEDDING_MODEL, VECTOR_FIELD, TEXT_FIELD
+from ragService import gemini_client, collection, EMBEDDING_MODEL, VECTOR_FIELD, TEXT_FIELD
 import hashlib
 import os
 import traceback

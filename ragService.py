@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types # <--- ADDED THIS IMPORT
 from google.genai.errors import APIError
 from pymongo import MongoClient
 import certifi
@@ -66,12 +67,18 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
         
     # --- 2.1 Embed the User Query ---
     try:
-        # Use 'contents' (list) per Gemini client API
-        query_embedding_response = gemini_client.models.embed_content(
-            model=EMBEDDING_MODEL,
-            contents=[user_query],
-            task_type="RETRIEVAL_QUERY"
+        # 1. Define the configuration object
+        config = types.EmbedContentConfig(
+            task_type="RETRIEVAL_QUERY" # <--- Use task_type here
         )
+
+        # 2. Pass the config to the embed_content call
+        query_embedding_response = gemini_client.models.embed_content(
+            model=EMBEDDING_MODEL, 
+            contents=user_query,
+            config=config # <--- Pass the configuration object
+        )
+        query_vector = query_embedding_response.embeddings[0].values
 
         # extract embedding robustly
         query_vector = None
@@ -160,7 +167,7 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
     USER QUESTION: {user_query}
     
     RESPONSE:
-    """
+"""
 
     try:
         response = gemini_client.models.generate_content(
