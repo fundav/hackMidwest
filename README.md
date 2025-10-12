@@ -42,7 +42,7 @@ This application is built on a modern, decoupled full-stack architecture.
 | **LLM / Embeddings** | **Google Gemini API** (`text-embedding-004`, `gemini-2.5-flash`) | Generates vector embeddings and the final chat response. |
 | **Vector Database** | **MongoDB Atlas** | Stores text chunks and their corresponding vector embeddings (`embedding` field). |
 | **Backend API** | **Python**, **FastAPI**, **Uvicorn** | High-performance API routing and logic server. |
-| **Frontend / GUI** | **HTML, CSS, JavaScript** (`fetch` API) | Provides the user interface and handles communication with the backend via HTTP POST requests. |
+| **Frontend / GUI** | **HTML, CSS, Vite, JavaScript** (`fetch` API) | Provides the user interface and handles communication with the backend via HTTP POST requests. |
 
 ***
 
