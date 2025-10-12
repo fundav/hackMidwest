@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai.errors import APIError
 from pymongo import MongoClient
+import certifi
+import urllib.parse
 
 # 1. Load Environment Variables (happens once when the server starts)
 load_dotenv()
@@ -14,8 +16,9 @@ DB_NAME = os.getenv("MONGO_DB_NAME")
 COLLECTION_NAME = os.getenv("MONGO_COLLECTION_NAME")
 
 # UPDATED FIELDS (These variables must be defined globally!)
-VECTOR_FIELD = os.getenv("MONGO_VECTOR_FIELD")  # 'embedding'
-TEXT_FIELD = os.getenv("MONGO_TEXT_FIELD")      # 'text'
+VECTOR_FIELD = os.getenv("MONGO_VECTOR_FIELD") or "embedding"  # 'embedding'
+# TEXT_FIELD: default to 'text' when env var is missing to keep compatibility
+TEXT_FIELD = os.getenv("MONGO_TEXT_FIELD") or "text"      # 'text'
 # ------------------------------
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
@@ -25,7 +28,20 @@ VECTOR_INDEX_NAME = "vector_index"           # <-- DEFINES VECTOR_INDEX_NAME
 # --- 2. Initialize Clients Globally (These variables must be defined!) ---
 try:
     # MongoDB Client
-    mongo_client = MongoClient(MONGODB_URI)
+    safe_uri = MONGODB_URI
+    try:
+        if MONGODB_URI and '://' in MONGODB_URI and '@' in MONGODB_URI:
+            scheme, rest = MONGODB_URI.split('://', 1)
+            authpart = rest.split('@', 1)[0]
+            if ':' in authpart:
+                user, pw = authpart.split(':', 1)
+                pw_enc = urllib.parse.quote(pw, safe='')
+                after = rest.split('@', 1)[1]
+                safe_uri = f"{scheme}://{user}:{pw_enc}@{after}"
+    except Exception:
+        safe_uri = MONGODB_URI
+
+    mongo_client = MongoClient(safe_uri, tls=True, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=10000)
     db = mongo_client[DB_NAME]
     collection = db[COLLECTION_NAME]         # <-- DEFINES collection
 
@@ -50,12 +66,29 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
         
     # --- 2.1 Embed the User Query ---
     try:
+        # Use 'contents' (list) per Gemini client API
         query_embedding_response = gemini_client.models.embed_content(
-            model=EMBEDDING_MODEL, 
-            content=user_query,
+            model=EMBEDDING_MODEL,
+            contents=[user_query],
             task_type="RETRIEVAL_QUERY"
         )
-        query_vector = query_embedding_response.embedding
+
+        # extract embedding robustly
+        query_vector = None
+        if hasattr(query_embedding_response, 'embedding'):
+            query_vector = query_embedding_response.embedding
+        elif hasattr(query_embedding_response, 'embeddings'):
+            query_vector = query_embedding_response.embeddings[0]
+        elif isinstance(query_embedding_response, dict):
+            query_vector = query_embedding_response.get('embedding') or (query_embedding_response.get('embeddings') and query_embedding_response.get('embeddings')[0])
+            if not query_vector and query_embedding_response.get('data'):
+                try:
+                    query_vector = query_embedding_response['data'][0].get('embedding')
+                except Exception:
+                    query_vector = None
+
+        if query_vector is None:
+            return "Error: could not extract embedding from Gemini response"
     except APIError as e:
         return f"Error embedding query with Gemini: {e}"
     
