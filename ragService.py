@@ -6,6 +6,10 @@ from pymongo import MongoClient
 import certifi
 import urllib.parse
 import re
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
 
 # 1. Load Environment Variables (happens once when the server starts)
 load_dotenv()
@@ -282,6 +286,7 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
     and complete answer to the user's question *ONLY* based on the provided CONTEXT. 
     Reference the 'Program Name' and 'Title' when possible to ground your answer.
     Do not use outside knowledge.
+    but small talk can happen.
     
     If the context does not contain the answer, state clearly: 
     "I cannot find the answer to that specific question in the USDA programs documentation."
@@ -299,6 +304,24 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
             model=RAG_CHAT_MODEL,
             contents=system_prompt
         )
-        return response.text
+        firefox_options = Options()
+        firefox_options.add_argument('-headless')
+        driver = webdriver.Firefox(options=firefox_options)
+        driver.implicitly_wait(30)
+        url = "https://gemini.google.com/app"
+        driver.get(url)
+        chatbox = driver.find_element(By.CSS_SELECTOR, ".ql-editor")
+        chatbox.clear()
+        chatbox.send_keys(Keys.UP)
+        prompt = f"Reword this AI chatbot response to sound more professional and clean (ANSWER DIRECTLY, MAKE IT IN COMPACT PARAGRAPHS, AND DO NOT: REFERENCE THIS PROMPT IN REPONSE, USE BULLET POINTS))\n\n{response.text}"
+        chatbox.send_keys(prompt)
+        chatbox.send_keys(Keys.ENTER)
+        reponse = driver.find_element(By.CSS_SELECTOR, "infinite-scroller.chat-history")
+        Wait = driver.find_element(By.CSS_SELECTOR, ".response-container-has-multiple-responses")
+        reponse = Wait.find_elements(By.TAG_NAME, 'p')
+        a = []
+        for i in reponse:
+            a.append(i.text)
+        return "\n".join(a)
     except APIError as e:
         return f"Error generating final response: {e}"
