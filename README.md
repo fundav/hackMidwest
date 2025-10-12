@@ -50,6 +50,7 @@ This application is built on a modern, decoupled full-stack architecture.
 
 The project is structured to separate the core RAG logic, the API serving layer, and the frontend presentation.
 
+'''
 /hackMidwest
 ├── .env              # Configuration: API Keys (Gemini), MongoDB URI, and application settings.
 ├── README.md         # Project documentation (this file).
@@ -58,3 +59,4 @@ The project is structured to separate the core RAG logic, the API serving layer,
 ├── api_app.py        # API Service: FastAPI entry point, defines the '/chat' endpoint, and handles CORS.
 └── frontend/         # Frontend GUI Directory
     └── index.html    # Client-side chat interface and JavaScript API calls.
+'''
