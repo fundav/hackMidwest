@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+//import reactIcon from './assets/react.svg';
 
 // Configuration: Your FastAPI endpoint
 const API_ENDPOINT = 'http://localhost:8000/chat';
 
 // Structure for a single message
 const initialMessages = [
-  { role: 'assistant', content: 'Hello! I am Sproute 🌱. Ask me a question about any program.' }
+  { role: 'assistant', content: 'Hello, my name is Sprout! Ask me a question about any rural development program.' }
 ];
 
 function Chatbot() {
@@ -72,14 +73,24 @@ function Chatbot() {
 
   return (
     <div style={styles.chatContainer}>
-      <h2>The Rural Navigator</h2>
+      {/* Top-centered logo */}
+      <div style={styles.topIconWrap}>
+        <img
+          src="/usda-rd-logo.png"
+          alt="USDA Rural Development"
+          title="USDA Rural Development"
+          style={styles.topIcon}
+          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = reactIcon; }}
+        />
+      </div>
+      <h2 style={styles.title}>The Rural Navigator</h2>
       
       {/* Message History */}
       <div style={styles.messageList}>
         {messages.map((msg, index) => (
           <div key={index} style={msg.role === 'user' ? styles.userMessage : styles.aiMessage}>
             <div style={styles.messageBubble}>
-                <strong>{msg.role === 'user' ? 'You' : 'Sproute 🌱'}:</strong> {msg.content}
+                <strong>{msg.role === 'user' ? 'You' : 'Sprout 🌱'}:</strong> {msg.content}
             </div>
           </div>
         ))}
@@ -87,7 +98,7 @@ function Chatbot() {
         {isLoading && (
           <div style={styles.loadingMessage}>
       <div style={styles.messageBubble}>
-        Sproute 🌱 is processing your query...
+        Sprout 🌱 is processing your query...
       </div>
           </div>
         )}
@@ -121,10 +132,31 @@ const styles = {
     padding: '24px',
     borderRadius: '12px',
     boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-  // Keep original (light) color palette — plain background (no pattern)
-  backgroundColor: '#ffffff',
+    // Light green → yellow gradient background across the whole chatbox
+    background: 'radial-gradient(circle, #f7f7c8 0%, #ddf4dfff 50%, #dbe3eaff 80%)',
+    // Fallback solid color for older browsers
+    backgroundColor: '#f7f7c8',
     display: 'flex',
     flexDirection: 'column',
+  },
+  // Top-right corner image styles
+  // Top-centered logo styles
+  topIconWrap: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: '8px',
+  },
+  topIcon: {
+    width: '120px',
+    height: 'auto',
+    objectFit: 'contain',
+    display: 'block',
+    pointerEvents: 'none',
+  },
+  title: {
+    textAlign: 'center',
+    margin: '6px 0 14px',
   },
   messageList: {
     flexGrow: 1,
@@ -148,7 +180,7 @@ const styles = {
     padding: '10px',
     borderRadius: '15px',
     display: 'inline-block',
-    background: '#e0f7fa', // Light blue for Sproute (original)
+    background: '#eaf2f3ff', // Light blue for Sprout (original)
     color: '#004d40',
     fontSize: '14px',
     lineHeight: '1.4',
@@ -174,7 +206,7 @@ const styles = {
     padding: '10px 15px',
     border: 'none',
     borderRadius: '12px',
-    backgroundColor: '#9caf88',
+    backgroundColor: '#1C4E9D',
     color: 'white',
     cursor: 'pointer',
   }
