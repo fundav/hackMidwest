@@ -6,7 +6,7 @@ const API_ENDPOINT = 'http://localhost:8000/chat';
 
 // Structure for a single message
 const initialMessages = [
-  { role: 'assistant', content: 'Hello, my name is Sprout! Ask me a question about any rural development program.' }
+  { role: 'assistant', content: 'Hello, my name is Sprout! Ask me anything about rural development programs.' }
 ];
 
 function Chatbot() {
@@ -176,7 +176,7 @@ const styles = {
     marginBottom: '10px',
   },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: '50%',
     padding: '10px',
     borderRadius: '15px',
     display: 'inline-block',
