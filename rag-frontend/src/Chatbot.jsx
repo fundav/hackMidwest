@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 //import reactIcon from './assets/react.svg';
 
 // Configuration: Your FastAPI endpoint
@@ -90,7 +92,11 @@ function Chatbot() {
         {messages.map((msg, index) => (
           <div key={index} style={msg.role === 'user' ? styles.userMessage : styles.aiMessage}>
             <div style={styles.messageBubble}>
-                <strong>{msg.role === 'user' ? 'You' : 'Sprout 🌱'}:</strong> {msg.content}
+                <strong>{msg.role === 'user' ? 'You' : 'Sprout 🌱'}:</strong>{' '}
+                {/* Render message content as Markdown so *italic* and **bold** work */}
+                <div style={{ display: 'inline-block', maxWidth: '100%' }}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                </div>
             </div>
           </div>
         ))}

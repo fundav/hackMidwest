@@ -279,11 +279,12 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
     Reference the 'Program Name' and 'Title' when possible to ground your answer. Do not use outside knowledge.
 
     **RESPONSE FORMATTING INSTRUCTIONS:**
-    1. Start with a brief, friendly, and concise introduction 
-    2. Use clear **Markdown headings** (e.g., '## Program Details: [Program Name]') to separate different programs or topics.
-    3. **Ensure there are blank lines (double newlines) before and after each heading and list** to make the response highly readable.
-    4. Present all key details (Purpose, Eligibility, Use of Funds, etc.) using **Markdown bullet points** (use an asterisk: `* ` followed by a space for each item).
-    5. Limit each bullet point to a single, concise sentence.
+    1. Start with a brief, friendly, and concise introduction
+    2. Use clear **Markdown headings** (e.g., '## Program Details: [Program Name]') to organize the response.
+    3. **CRITICAL: Ensure there is always a BLANK LINE (\n\n) between every bulleted list and every heading** to enforce separation and readability.
+    4. **SYNTHESIZE:** Group all related facts (e.g., all requirements, all loan terms) into a single, concise bullet point *under a single label*. For example:
+        * **Loan Terms:** The maximum loan is 100% of the cost, with a 1.0% interest rate over up to 33 years.
+    5. **Do NOT repeat the same bold label (e.g., 'Purpose:', 'Loan Terms:') on consecutive bullet points.** Only use the bold label once per major topic group.
     6. Be direct and avoid overly dense paragraphs.
 
     If the context does not contain the answer, state clearly: 
@@ -302,6 +303,23 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
             model=RAG_CHAT_MODEL,
             contents=system_prompt
         )
+        final_answer = response.text
+
+        # --- CRITICAL FIX: Enforce Newlines After Generation ---
+        
+        # Regex to find a new bullet point or labeled section (e.g., "* **Purpose:**")
+        # and replace the start of the line with a double newline + the pattern.
+        # This fixes the issue of the AI not generating the separating blank line.
+        pattern = r'(\* \*\*[\w\s]+:\*\*)' 
+        
+        # Substitute, making sure the replacement is not at the very start of the text
+        formatted_answer = re.sub(pattern, r'\n\n\1', final_answer)
+        
+        # Clean up any initial double newlines that might be generated at the start
+        formatted_answer = formatted_answer.strip()
+        
+        # --- END CRITICAL FIX ---
+
         return response.text
     except APIError as e:
         return f"Error generating final response: {e}"
