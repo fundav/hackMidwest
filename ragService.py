@@ -279,7 +279,7 @@ def get_rag_answer(user_query: str, k: int = 4) -> str:
     Reference the 'Program Name' and 'Title' when possible to ground your answer. Do not use outside knowledge.
 
     **RESPONSE FORMATTING INSTRUCTIONS:**
-    1. Start with a brief, friendly, and concise introduction
+    1. Start with a brief, friendly, and concise introduction.
     2. Use clear **Markdown headings** (e.g., '## Program Details: [Program Name]') to organize the response.
     3. **CRITICAL: Ensure there is always a BLANK LINE (\n\n) between every bulleted list and every heading** to enforce separation and readability.
     4. **SYNTHESIZE:** Group all related facts (e.g., all requirements, all loan terms) into a single, concise bullet point *under a single label*. For example:
