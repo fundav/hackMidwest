@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 //import reactIcon from './assets/react.svg';
 
 // Configuration: Your FastAPI endpoint
-const API_ENDPOINT = 'https://usda-chatbotbackend.onrender.com/';
+const API_ENDPOINT = 'https://usda-chatbotbackend.onrender.com/chat';
 
 // Structure for a single message
 const initialMessages = [
