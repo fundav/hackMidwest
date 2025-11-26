@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from .ragService import get_rag_answer # <--- Imports your core RAG function
+from ragService import get_rag_answer # <--- Imports your core RAG function
 
 # 1. Initialize the FastAPI application
 app = FastAPI(title="USDA RAG Chatbot API")
