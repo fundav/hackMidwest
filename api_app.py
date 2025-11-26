@@ -10,7 +10,7 @@ app = FastAPI(title="USDA RAG Chatbot API")
 # *WARNING*: Using "*" (wildcard) is easy for development, but specify 
 # your frontend's exact URL (e.g., "http://localhost:3000") in a real deployment.
 origins = [
-    "*", 
+    "*", "https://usda-chatbot.onrender.com/"
 ]
 
 app.add_middleware(
